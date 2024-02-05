@@ -9,6 +9,7 @@ package shared
 import (
 	"context"
 	"errors"
+	"time"
 )
 
 const (
@@ -44,9 +45,12 @@ func DoBatchTransfer(ctx context.Context, o *BatchTransferOptions) error {
 
 	// Create the goroutines that process each operation (in parallel).
 	for g := uint16(0); g < o.Concurrency; g++ {
-		//grIndex := g
+		grIndex := g
 		go func() {
 			for f := range operationChannel {
+				if grIndex == o.Concurrency-uint16(1) {
+					time.Sleep(1 * time.Second)
+				}
 				err := f()
 				operationResponseChannel <- err
 			}

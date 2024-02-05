@@ -6,6 +6,11 @@
 
 package shared
 
+import (
+	"fmt"
+	"time"
+)
+
 type BufferManager[T ~[]byte] interface {
 	// Acquire returns the channel that contains the pool of buffers.
 	Acquire() <-chan T
@@ -46,7 +51,11 @@ func (pool *mmbPool) Acquire() <-chan Mmb {
 }
 
 func (pool *mmbPool) Grow() (int, error) {
+	fmt.Println("Start:", pool.count)
 	if pool.count < pool.max {
+		if pool.count == pool.max-1 {
+			time.Sleep(5 * time.Second)
+		}
 		buffer, err := NewMMB(pool.size)
 		if err != nil {
 			return 0, err
@@ -54,10 +63,12 @@ func (pool *mmbPool) Grow() (int, error) {
 		pool.buffers <- buffer
 		pool.count++
 	}
+	fmt.Println("End:", pool.count)
 	return pool.count, nil
 }
 
 func (pool *mmbPool) Release(buffer Mmb) {
+	fmt.Println("Release:", len(pool.buffers))
 	pool.buffers <- buffer
 }
 
